@@ -14,10 +14,10 @@ citus_config: []
 #    - line: citus.enable_repartition_joins = true
 #    - line: citus.enable_version_checks = false
 #      state: absent
-pg_version: 13
+pg_version: 12
 pg_user: postgres
 pg_group: postgres
 postgresql_service: postgresql
-postgresql_data_path: /var/lib/postgresql/{{ pg_version }}
-postgresql_conf_path: /etc/postgresql/{{ pg_version }}/main
-postgresql_bin_path: /usr/lib/postgresql/{{ pg_version }}/bin
+postgresql_data_path: /var/lib/postgresql
+postgresql_conf_path: /etc/postgresql
+postgresql_bin_path: /usr/lib/postgresql
