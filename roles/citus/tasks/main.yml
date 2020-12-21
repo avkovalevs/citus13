@@ -5,6 +5,7 @@
     pkg:  gpg-agent
     state: present
     update_cache: yes
+  tags: pg
 
 - name: "Add an Apt signing key, uses whichever key is at the URL"
   apt_key:
@@ -13,6 +14,7 @@
   with_items:
     - https://repos.citusdata.com/community/gpgkey
     - https://www.postgresql.org/media/keys/ACCC4CF8.asc
+  tags: pg
 
 - name: "Add citus and pg apt repositories"
   apt_repository:
@@ -22,11 +24,13 @@
   with_items:
     - deb https://repos.citusdata.com/community/ubuntu/ {{ ansible_distribution_release }} main
     - deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+  tags: pg
 
 - name: "Check if any PG databases exists"
   stat:
-    path: "{{ postgresql_data_path }}/{{ pg_version }}/main/PG_VERSION"
+    path: "{{ postgresql_data_path }}/13/main/PG_VERSION"
   register: pg_version
+  tags: pg
 
 - name: "Stop database processes if exists before delete"
   systemd:
@@ -34,6 +38,7 @@
     state: stopped
     enabled: false
   when: pg_version.stat.exists
+  tags: pg
 
 - name: "Delete citus and pg packages"
   apt:
@@ -46,6 +51,7 @@
     purge: yes
     update_cache: true
   when: pg_version.stat.exists
+  tags: pg
 
 - name: "Make sure the postgres data directory does not exists"
   file:
@@ -56,6 +62,7 @@
     mode: 0700
   become: true
   when: pg_version.stat.exists
+  tags: pg
 
 - name: "Fresh install pg, citus, cstore_fdw packages"
   apt:
@@ -66,6 +73,7 @@
     - libprotobuf-c-dev
     state: present
     update_cache: true
+  tags: pg
 
 - name: "Add postgres user to sudoers"
   lineinfile:
@@ -73,6 +81,7 @@
     state: present
     line: 'postgres ALL=(ALL) NOPASSWD: ALL'
     validate: '/usr/sbin/visudo -cf %s'
+  tags: pg
 
 - name: PostgreSQL | Make sure the postgres data directory exists
   file:
@@ -83,6 +92,13 @@
     mode: 0700
   become: true
   become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "Check if CITUS databases exists"
+  stat:
+    path: "{{ postgresql_data_path }}/12/citus/PG_VERSION"
+  register: pgc_version
+  tags: pg
 
 - name: "Init PG cluster with citus and cstore_fdw extentions on 9700 port"
   shell: "{{ postgresql_bin_path }}/12/bin/initdb -D {{ postgresql_data_path }}/12/citus"
@@ -90,3 +106,26 @@
     executable: /bin/bash
   become: true
   become_user: "{{ pg_user }}"
+  when: not pgc_version.stat.exists
+  tags: pg
+ 
+- name: "Change postgresql.conf"
+  lineinfile:
+    path: "{{ postgresql_data_path }}/12/citus/postgresql.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+  - { regexp: '^#listen_addresses =', line: "listen_addresses = '*'"}
+  tags: pg
+
+- name: "Copy pg_hba.conf to the targets"
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_data_path }}/12/citus/pg_hba.conf"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+  become: true
+  become_user: "{{ pg_user }}"
+  tags: pg
+ 
