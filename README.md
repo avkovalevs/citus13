@@ -19,10 +19,19 @@ $ sudo apt-add-repository ppa:ansible/ansible
 $ sudo apt update
 $ sudo apt install ansible
 ~~~
-2. Get the code: ~~~ cd /etc/ansible && git clone https://abc.git ~~~
-3. Generate public and private keys for root user on master node: ~~~ssh-keygen -t rsa~~~
+2. Get the code: 
+~~~ 
+cd /etc/ansible && git clone https://github.com/avkovalevs/citus.git
+~~~
+3. Generate public and private keys for root user on master node: 
+~~~
+ssh-keygen -t rsa
+~~~
 4. Check in /etc/ssh/sshd_config file parameters "PasswordAuthentication yes" and "PermitRootLogin yes" installed and restart sshd service on all nodes before step 5.
-5. Copy public key from master node to all nodes including master(root->root): ~~~ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1~~~
+5. Copy public key from master node to all nodes including master(root->root): 
+~~~
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1
+~~~
 6. Set "PasswordAuthentication no" changed in step 4 and restart ssh like "systemctl restart ssh.service" on all nodes.
 7. Change ./roles/citus/defaults/main.yml and inventory file "hosts" on your own depend on number of nodes.
 8. Run the playbook to deploy cluster
