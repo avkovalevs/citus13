@@ -1,12 +1,12 @@
 Deploy Citus cluster with cstore_fdw
 ==================
 
-Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/. Tested with Citus 9.5 with PG 13 on Ubuntu 18.04.
+Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/. Tested with Citus 9.5 with PG 12 on Ubuntu 18.04.
 
 Requirements
 ------------
 
-PostgreSQL 13, Citus 9.5, Ansible 2.9.16, open ports (22 from anywhere, 5432 and 9700 inside the private network) 
+PostgreSQL 12, Citus 9.5, Ansible 2.9.16, open ports (22 from anywhere, 5432 and 9700 inside the private network) 
 
 Role Variables
 --------------
