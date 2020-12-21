@@ -45,12 +45,14 @@
     update_cache: true
   when: pg_version.stat.exists
 
-- name: "Fresh install citus and pg packages"
+- name: "Fresh install pg, citus, cstore_fdw packages"
   apt:
     pkg: 
     - postgresql-13
     - postgresql-contrib
     - postgresql-13-citus-9.5
+    - protobuf-c-compiler
+    - libprotobuf-c-dev
     state: present
     update_cache: true
 

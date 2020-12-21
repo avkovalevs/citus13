@@ -1,12 +1,12 @@
-ansible-role-citus
+Deploy Citus cluster with cstore_fdw
 ==================
 
-Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/ . Tested with Citus 9.5 with PG 12 on Ubuntu 18.04.
+Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/. Tested with Citus 9.5 with PG 13 on Ubuntu 18.04.
 
 Requirements
 ------------
 
-PostgreSQL 12.1, Citus 9.5, open ports (22 from anywhere, 5432 and 9700 inside the private network) 
+PostgreSQL 13, Citus 9.5, Ansible 2.9.16, open ports (22 from anywhere, 5432 and 9700 inside the private network) 
 
 Role Variables
 --------------
@@ -31,6 +31,8 @@ ssh-keygen -t rsa
 5. Copy public key from master node to all nodes including master(root->root): 
 ~~~
 ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@node2
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@dbsrv2
 ~~~
 6. Set "PasswordAuthentication no" changed in step 4 and restart ssh like "systemctl restart ssh.service" on all nodes.
 7. Change ./roles/citus/defaults/main.yml and inventory file "hosts" on your own depend on number of nodes.
