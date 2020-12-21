@@ -1,0 +1,14 @@
+- name: Install the Citus cluster
+  hosts: cituscluster
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: "Display hostnames of citus cluster"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+  roles:
+    - common
+    - citus
+    
+

@@ -1,0 +1,71 @@
+---
+# tasks file for citus
+- name: "Install apt package requirements"
+  apt:
+    pkg:  gpg-agent
+    state: present
+    update_cache: yes
+
+- name: "Add an Apt signing key, uses whichever key is at the URL"
+  apt_key:
+    url: "{{ item }}"
+    state: present
+  with_items:
+    - https://repos.citusdata.com/community/gpgkey
+    - https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+- name: "Add citus and pg apt repositories"
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items:
+    - deb https://repos.citusdata.com/community/ubuntu/ {{ ansible_distribution_release }} main
+    - deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+
+- name: "Check if any PG databases exists"
+  stat:
+    path: "{{ postgresql_data_path }}/PG_VERSION"
+  register: pg_version
+
+- name: "Stop database processes if exists before delete"
+  systemd:
+    name: "{{ postgresql_service }}"
+    state: stopped
+    enabled: false
+  when: pg_version.stat.exists
+
+- name: "Delete citus and pg packages"
+  apt:
+    pkg:  
+    - postgresql-13
+    - postgresql-contrib
+    - postgresql-13-citus-9.5
+    state: absent
+    update_cache: true
+  when: pg_version.stat.exists
+
+- name: "Fresh install citus and pg packages"
+  apt:
+    pkg: 
+    - postgresql-13
+    - postgresql-contrib
+    - postgresql-13-citus-9.5
+    state: present
+    update_cache: true
+
+- name: PostgreSQL | Make sure the postgres data directory exists
+  file:
+    path: "{{ postgresql_data_path }}/citus"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+    state: directory
+    mode: 0700
+
+- name: "Init PG cluster with citus and cstore_fdw extentions on 9700 port"
+  shell: "{{ postgresql_bin_path }}/initdb -D {{ postgresql_data_path }}/citus"
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ pg_user }}"
+
