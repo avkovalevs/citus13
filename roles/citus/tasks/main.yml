@@ -40,7 +40,7 @@
   when: pg_version.stat.exists
   tags: pg
 
-- name: "Delete citus and pg packages"
+- name: "Delete citus and pg packages if exists"
   apt:
     pkg:  
     - postgresql-13
@@ -71,8 +71,37 @@
     - postgresql-12-citus-9.5
     - protobuf-c-compiler
     - libprotobuf-c-dev
+    - postgresql-server-dev-12
     state: present
     update_cache: true
+  tags: pg
+  
+- name: "Cstore | Create build dir"
+  file:
+    path: /tmp/cstore
+    owner: root
+    group: root
+    state: directory
+    mode: 0700
+  tags: pg
+
+- name: "Cstore | Clone cstore_fdw repo"
+  git: 
+    repo: 'https://github.com/citusdata/cstore_fdw.git'
+    dest: /tmp/cstore
+    clone: yes
+  tags: pg
+
+- name: "Cstore | Build and install cstore_fdw to PG12"
+  shell: 
+    chdir: /tmp/cstore 
+    cmd: "PATH=/usr/lib/postgresql/12/bin:$PATH make && PATH=/usr/lib/postgresql/12/bin/:$PATH make install"
+    executable: /bin/bash
+  register: buildlog
+  tags: pg
+
+- debug:
+    var: buildlog
   tags: pg
 
 - name: "Add postgres user to sudoers"
@@ -117,7 +146,8 @@
     state: present
   with_items:
   - { regexp: '^#listen_addresses =', line: "listen_addresses = '*'"}
-  - { regexp: '^#shared_preload_libraries =', line: "shared_preload_libraries = 'citus'"}
+  - { regexp: '^#shared_preload_libraries =', line: "shared_preload_libraries = 'citus,cstore_fdw'"}
+  - { regexp: '^#port =', line: "port = 9700"}
   tags: pg
 
 - name: "Copy pg_hba.conf to the targets"
