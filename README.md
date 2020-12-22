@@ -29,8 +29,11 @@ $ cd ~
 $ ssh-keygen -t rsa
 ~~~
 Steps 4-6 needs for passwordless access between nodes for ansible-playbook tuning steps.
+
 4. Check in /etc/ssh/sshd_config file parameters "PasswordAuthentication yes" and "PermitRootLogin yes" installed and restart sshd service on all nodes before step 5.
+
 For step 5 you need to know root password. You can use your own hostnames (in my case node1, node2, dbsrv2.) 
+
 5. Copy public key from master node to all nodes including master(root->root): 
 ~~~
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1
