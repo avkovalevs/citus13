@@ -26,7 +26,7 @@
     - deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
   tags: pg
 
-- name: "Check if any PG databases exists"
+- name: "Check if any PG13 databases exists"
   stat:
     path: "{{ postgresql_data_path }}/13/main/PG_VERSION"
   register: pg_version
@@ -64,7 +64,18 @@
   when: pg_version.stat.exists
   tags: pg
 
-- name: "Fresh install pg, citus, cstore_fdw packages"
+- name: "Make sure the postgres config directory does not exists"
+  file:
+    path: "{{ postgresql_conf_path }}/13"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+    state: absent
+    mode: 0700
+  become: true
+  when: pg_version.stat.exists
+  tags: pg
+
+- name: "PG12 | Fresh install pg, citus, cstore_fdw packages"
   apt:
     pkg: 
     - postgresql-12
@@ -104,7 +115,7 @@
     var: buildlog
   tags: pg
 
-- name: "Add postgres user to sudoers"
+- name: "PG12 | Add postgres user to sudoers"
   lineinfile:
     path: /etc/sudoers
     state: present
@@ -112,7 +123,7 @@
     validate: '/usr/sbin/visudo -cf %s'
   tags: pg
 
-- name: PostgreSQL | Make sure the postgres data directory exists
+- name: "PG12 | Make sure the postgres data directory exists"
   file:
     path: "{{ postgresql_data_path }}/12/citus"
     owner: "{{ pg_user }}"
@@ -123,13 +134,13 @@
   become_user: "{{ pg_user }}"
   tags: pg
 
-- name: "Check if CITUS databases exists"
+- name: "PG12 | Check if CITUS databases exists"
   stat:
     path: "{{ postgresql_data_path }}/12/citus/PG_VERSION"
   register: pgc_version
   tags: pg
 
-- name: "Init PG cluster with citus and cstore_fdw extentions on 9700 port"
+- name: "PG12 | create CITUS cluster "
   shell: "{{ postgresql_bin_path }}/12/bin/initdb -D {{ postgresql_data_path }}/12/citus"
   args:
     executable: /bin/bash
@@ -138,7 +149,7 @@
   when: not pgc_version.stat.exists
   tags: pg
  
-- name: "Change postgresql.conf"
+- name: "PG12 | Change postgresql.conf in CITUS cluster"
   lineinfile:
     path: "{{ postgresql_data_path }}/12/citus/postgresql.conf"
     regexp: "{{ item.regexp }}"
@@ -150,12 +161,36 @@
   - { regexp: '^#port =', line: "port = 9700"}
   tags: pg
 
-- name: "Copy pg_hba.conf to the targets"
+- name: "PG12 | Copy pg_hba.conf to CITUS cluster"
   template:
     src: pg_hba.conf.j2
     dest: "{{ postgresql_data_path }}/12/citus/pg_hba.conf"
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
+  become: true
+  become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "PG12 | Add citus extention to default database" 
+  postgresql_ext:
+    name: citus
+    db: postgres
+    port: 9700
+    state: present
+    login_user: "{{ pg_user }}"
+    login_password: "{{ pg_user }}"
+  become: true
+  become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "PG12 | Add cstore_fdw extention to default database" 
+  postgresql_ext:
+    name: cstore_fdw
+    db: postgres
+    port: 9700
+    state: present
+    login_user: "{{ pg_user }}"
+    login_password: "{{ pg_user }}"
   become: true
   become_user: "{{ pg_user }}"
   tags: pg

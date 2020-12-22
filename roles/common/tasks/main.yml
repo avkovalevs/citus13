@@ -4,7 +4,7 @@
   apt:
     pkg: 
     - python-netaddr
-    - python-psycopg2
+    - python3-psycopg2
     - libpq-dev
     - nmap
     - git
