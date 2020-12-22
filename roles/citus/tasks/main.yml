@@ -198,3 +198,39 @@
     state: restarted 
     daemon_reload: yes
   tags: pg
+
+- name: "PG12 | Get a list of active citus worker nodes"
+  shell: psql -p 9700 -c "SELECT * FROM master_get_active_worker_nodes();"
+  args:
+    executable: /bin/bash
+  register: citus_active_worker_nodes
+  become: true
+  become_user: "{{ pg_user }}"
+  become_method: sudo
+  changed_when: false
+  tags: pg
+
+- debug:
+    var: citus_active_worker_nodes
+  tags: pg
+
+- name: "PG12 | Add the worker nodes to the citus coordinator"
+  shell: "psql -p 9700 -c \"SELECT * from master_add_node('{{ hostvars[item][citus_node_variable] }}', 9700);\""
+  args:
+    executable: /bin/bash
+  register: citus_add_worker_node
+  become: true
+  become_user: "{{ pg_user }}" 
+  become_method: sudo
+  failed_when: 'hostvars[item][citus_node_variable] not in citus_add_worker_node.stdout'
+  changed_when: false
+  with_items: "{{ groups[citus_host_group] }}"
+  when:
+    - citus_coordinator
+    - not hostvars[item]['citus_coordinator']
+    - hostvars[item][citus_node_variable] not in citus_active_worker_nodes.stdout
+  tags: pg
+
+- debug:
+    var: citus_add_worker_nodes
+  tags: pg
