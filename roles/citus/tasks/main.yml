@@ -117,6 +117,7 @@
     state: present
   with_items:
   - { regexp: '^#listen_addresses =', line: "listen_addresses = '*'"}
+  - { regexp: '^#shared_preload_libraries =', line: "shared_preload_libraries = 'citus'"}
   tags: pg
 
 - name: "Copy pg_hba.conf to the targets"
@@ -128,4 +129,13 @@
   become: true
   become_user: "{{ pg_user }}"
   tags: pg
+
+- name: "Enable and start PG service"
+  systemd:
+    name: postgresql-12
+    enabled: yes
+    state: restarted 
+    daemon_reload: yes
+  tags: pg
+
  

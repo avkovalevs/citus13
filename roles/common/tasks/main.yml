@@ -6,6 +6,7 @@
     - python-netaddr
     - python-psycopg2
     - libpq-dev
+    - nmap
     state: present
     update_cache: yes
   tags: common
