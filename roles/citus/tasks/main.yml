@@ -123,17 +123,6 @@
     validate: '/usr/sbin/visudo -cf %s'
   tags: pg
 
-- name: "PG12 | Make sure the postgres data directory exists"
-  file:
-    path: "{{ postgresql_data_path }}/12/citus"
-    owner: "{{ pg_user }}"
-    group: "{{ pg_group }}"
-    state: directory
-    mode: 0700
-  become: true
-  become_user: "{{ pg_user }}"
-  tags: pg
-
 - name: "PG12 | Check if CITUS databases exists"
   stat:
     path: "{{ postgresql_data_path }}/12/citus/PG_VERSION"
@@ -141,11 +130,10 @@
   tags: pg
 
 - name: "PG12 | create CITUS cluster "
-  shell: "{{ postgresql_bin_path }}/12/bin/initdb -D {{ postgresql_data_path }}/12/citus"
+  shell: "/usr/bin/pg_createcluster 12 citus"
   args:
     executable: /bin/bash
   become: true
-  become_user: "{{ pg_user }}"
   when: not pgc_version.stat.exists
   tags: pg
  
@@ -195,12 +183,18 @@
   become_user: "{{ pg_user }}"
   tags: pg
 
-- name: "Enable and start PG service"
+- name: "PG12 | Enable and start CITUS PG service"
   systemd:
-    name: postgresql-12
+    name: postgresql@12-citus
     enabled: yes
     state: restarted 
     daemon_reload: yes
   tags: pg
 
- 
+- name: "PG12 | Enable and start MAIN PG service"
+  systemd:
+    name: postgresql@12-main
+    enabled: yes
+    state: restarted 
+    daemon_reload: yes
+  tags: pg
