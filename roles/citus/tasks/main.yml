@@ -139,7 +139,7 @@
  
 - name: "PG12 | Change postgresql.conf in CITUS cluster"
   lineinfile:
-    path: "{{ postgresql_data_path }}/12/citus/postgresql.conf"
+    path: "{{ postgresql_conf_path }}/12/citus/postgresql.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
@@ -152,11 +152,48 @@
 - name: "PG12 | Copy pg_hba.conf to CITUS cluster"
   template:
     src: pg_hba.conf.j2
-    dest: "{{ postgresql_data_path }}/12/citus/pg_hba.conf"
+    dest: "{{ postgresql_conf_path }}/12/citus/pg_hba.conf"
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
   become: true
   become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "PG12 | Enable and start CITUS PG service"
+  systemd:
+    name: postgresql@12-citus
+    enabled: yes
+    state: restarted 
+    daemon_reload: yes
+  tags: pg
+
+- name: "PG12 | Change postgresql.conf in MAIN cluster"
+  lineinfile:
+    path: "{{ postgresql_conf_path }}/12/main/postgresql.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+  - { regexp: '^#listen_addresses =', line: "listen_addresses = '*'"}
+  - { regexp: '^#port =', line: "port = 5432"}
+  tags: pg
+
+- name: "PG12 | Copy pg_hba.conf to MAIN cluster"
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_conf_path }}/12/main/pg_hba.conf"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+  become: true
+  become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "PG12 | Enable and start MAIN PG service"
+  systemd:
+    name: postgresql@12-main
+    enabled: yes
+    state: restarted 
+    daemon_reload: yes
   tags: pg
 
 - name: "PG12 | Add citus extention to default database" 
@@ -181,22 +218,6 @@
     login_password: "{{ pg_user }}"
   become: true
   become_user: "{{ pg_user }}"
-  tags: pg
-
-- name: "PG12 | Enable and start CITUS PG service"
-  systemd:
-    name: postgresql@12-citus
-    enabled: yes
-    state: restarted 
-    daemon_reload: yes
-  tags: pg
-
-- name: "PG12 | Enable and start MAIN PG service"
-  systemd:
-    name: postgresql@12-main
-    enabled: yes
-    state: restarted 
-    daemon_reload: yes
   tags: pg
 
 - name: "PG12 | Get a list of active citus worker nodes"
