@@ -39,6 +39,7 @@ For step 5 you need to know root password. You can use your own hostnames (in my
 
 5. Copy public key from master node to all nodes including master(root->root): 
 ~~~
+$ cd ~
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node2
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@dbsrv2
