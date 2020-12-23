@@ -236,20 +236,20 @@
   tags: pg
 
 - name: "PG12 | Add the worker nodes to the citus coordinator"
-  shell: "psql -p 9700 -c \"SELECT * from master_add_node('{{ hostvars[item][citus_node_variable] }}', 9700);\""
+  shell: "psql -p 9700 -c \"SELECT * from master_add_node('{{ hostvars[item].ansible_hostname }}', 9700);\""
   args:
     executable: /bin/bash
   register: citus_add_worker_node
   become: true
   become_user: "{{ pg_user }}" 
   become_method: sudo
-  failed_when: 'hostvars[item][citus_node_variable] not in citus_add_worker_node.stdout'
+  # failed_when: "{{ hostvars[item].ansible_hostname }} not in citus_add_worker_node.stdout"
   changed_when: false
   with_items: "{{ groups[citus_host_group] }}"
   when:
     - citus_coordinator
     - not hostvars[item]['citus_coordinator']
-    - hostvars[item][citus_node_variable] not in citus_active_worker_nodes.stdout
+      #  - "{{ hostvars[item].ansible_hostname }} not in citus_active_worker_nodes.stdout"
   tags: pg
 
 - debug:

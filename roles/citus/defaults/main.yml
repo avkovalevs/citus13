@@ -3,7 +3,7 @@
 citus_major_version: 9.5
 citus_host_group: citus
 citus_coordinator: false
-citus_node_variable: ansible_host
+citus_node_variable: ansible_hostname
 # Allow unrestricted access to nodes in the local network.
 citus_config: []
 # citus_config takes two elements: line and state (optional)

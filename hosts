@@ -2,11 +2,12 @@
 dbsrv2
 
 [citus]
-172.31.41.41 citus_coordinator=True
+172.31.44.235 citus_coordinator=True
 172.31.47.154 citus_coordinator=False
 172.31.42.246 citus_coordinator=False
 
 [all]
-172.31.41.41
+172.31.44.235
 172.31.47.154
 172.31.42.246
+172.31.41.41
