@@ -28,94 +28,66 @@
 
 - name: "Check if any PG13 databases exists"
   stat:
-    path: "{{ postgresql_data_path }}/13/main/PG_VERSION"
-  register: pg_version
+    path: "{{ postgresql_data_path }}/{{ pg_version }}/main/PG_VERSION"
+  register: pg_version_check
   tags: pg
 
 - name: "Stop database processes if exists before delete"
   systemd:
-    name: postgresql@13-main.service
+    name: postgresql@{{ pg_version }}-main.service
     state: stopped
     enabled: false
-  when: pg_version.stat.exists
+  when: pg_version_check.stat.exists
   tags: pg
 
 - name: "Delete citus and pg packages if exists"
   apt:
     pkg:  
-    - postgresql-13
+    - postgresql-{{ pg_version }}
     - postgresql-contrib
-    - postgresql-13-citus-9.5
-    - postgresql-client-13
+    - postgresql-{{ pg_version }}-citus-9.5
+    - postgresql-client-{{ pg_version }}
+    - protobuf-c-compiler
+    - libprotobuf-c-dev
+    - postgresql-server-dev-{{ pg_version }}
     state: absent
     purge: yes
     update_cache: true
-  when: pg_version.stat.exists
+  when: pg_version_check.stat.exists
   tags: pg
 
 - name: "Make sure the postgres data directory does not exists"
   file:
-    path: "{{ postgresql_data_path }}/13"
+    path: "{{ postgresql_data_path }}/{{ pg_version }}"
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
     state: absent
     mode: 0700
   become: true
-  when: pg_version.stat.exists
+  when: pg_version_check.stat.exists
   tags: pg
 
 - name: "Make sure the postgres config directory does not exists"
   file:
-    path: "{{ postgresql_conf_path }}/13"
+    path: "{{ postgresql_conf_path }}/{{ pg_version }}"
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
     state: absent
     mode: 0700
   become: true
-  when: pg_version.stat.exists
+  when: pg_version_check.stat.exists
   tags: pg
 
-- name: "PG12 | Fresh install pg, citus, cstore_fdw packages"
+- name: "PG13 | Fresh install pg, citus packages"
   apt:
-    pkg: 
-    - postgresql-12
-    - postgresql-12-citus-9.5
-    - protobuf-c-compiler
-    - libprotobuf-c-dev
-    - postgresql-server-dev-12
+    name: 
+    - postgresql-{{ pg_version }}
+    - postgresql-{{ pg_version }}-citus-10.2
     state: present
     update_cache: true
   tags: pg
   
-- name: "Cstore | Create build dir"
-  file:
-    path: /tmp/cstore
-    owner: root
-    group: root
-    state: directory
-    mode: 0700
-  tags: pg
-
-- name: "Cstore | Clone cstore_fdw repo"
-  git: 
-    repo: 'https://github.com/citusdata/cstore_fdw.git'
-    dest: /tmp/cstore
-    clone: yes
-  tags: pg
-
-- name: "Cstore | Build and install cstore_fdw to PG12"
-  shell: 
-    chdir: /tmp/cstore 
-    cmd: "PATH=/usr/lib/postgresql/12/bin:$PATH make && PATH=/usr/lib/postgresql/12/bin/:$PATH make install"
-    executable: /bin/bash
-  register: buildlog
-  tags: pg
-
-- debug:
-    var: buildlog
-  tags: pg
-
-- name: "PG12 | Add postgres user to sudoers"
+- name: "PG13 | Add postgres user to sudoers"
   lineinfile:
     path: /etc/sudoers
     state: present
@@ -123,53 +95,53 @@
     validate: '/usr/sbin/visudo -cf %s'
   tags: pg
 
-- name: "PG12 | Check if CITUS databases exists"
+- name: "PG13 | Check if CITUS databases exists"
   stat:
-    path: "{{ postgresql_data_path }}/12/citus/PG_VERSION"
+    path: "{{ postgresql_data_path }}/{{ pg_version }}/citus/PG_VERSION"
   register: pgc_version
   tags: pg
 
-- name: "PG12 | create CITUS cluster "
-  shell: "/usr/bin/pg_createcluster 12 citus"
+- name: "PG13 | create CITUS cluster"
+  shell: "/usr/bin/pg_createcluster {{ pg_version }} citus"
   args:
     executable: /bin/bash
   become: true
   when: not pgc_version.stat.exists
   tags: pg
  
-- name: "PG12 | Change postgresql.conf in CITUS cluster"
+- name: "PG13 | Change postgresql.conf in CITUS cluster"
   lineinfile:
-    path: "{{ postgresql_conf_path }}/12/citus/postgresql.conf"
+    path: "{{ postgresql_conf_path }}/{{ pg_version }}/citus/postgresql.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
   with_items:
   - { regexp: '^#listen_addresses =', line: "listen_addresses = '*'"}
-  - { regexp: '^#shared_preload_libraries =', line: "shared_preload_libraries = 'citus,cstore_fdw'"}
+  - { regexp: '^#shared_preload_libraries =', line: "shared_preload_libraries = 'citus'"}
   - { regexp: '^#port =', line: "port = 9700"}
   tags: pg
 
-- name: "PG12 | Copy pg_hba.conf to CITUS cluster"
+- name: "PG13 | Copy pg_hba.conf to CITUS cluster"
   template:
     src: pg_hba.conf.j2
-    dest: "{{ postgresql_conf_path }}/12/citus/pg_hba.conf"
+    dest: "{{ postgresql_conf_path }}/{{ pg_version }}/citus/pg_hba.conf"
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
   become: true
   become_user: "{{ pg_user }}"
   tags: pg
 
-- name: "PG12 | Enable and start CITUS PG service"
+- name: "PG13 | Enable and start CITUS PG service"
   systemd:
-    name: postgresql@12-citus
+    name: postgresql@{{ pg_version }}-citus
     enabled: yes
     state: restarted 
     daemon_reload: yes
   tags: pg
 
-- name: "PG12 | Change postgresql.conf in MAIN cluster"
+- name: "PG13 | Change postgresql.conf in MAIN cluster"
   lineinfile:
-    path: "{{ postgresql_conf_path }}/12/main/postgresql.conf"
+    path: "{{ postgresql_conf_path }}/{{ pg_version }}/main/postgresql.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
@@ -178,25 +150,25 @@
   - { regexp: '^#port =', line: "port = 5432"}
   tags: pg
 
-- name: "PG12 | Copy pg_hba.conf to MAIN cluster"
+- name: "PG13 | Copy pg_hba.conf to MAIN cluster"
   template:
     src: pg_hba.conf.j2
-    dest: "{{ postgresql_conf_path }}/12/main/pg_hba.conf"
+    dest: "{{ postgresql_conf_path }}/{{ pg_version }}/main/pg_hba.conf"
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
   become: true
-  become_user: "{{ pg_user }}"
+  become_user: root
   tags: pg
 
-- name: "PG12 | Enable and start MAIN PG service"
+- name: "PG13 | Enable and start MAIN PG service"
   systemd:
-    name: postgresql@12-main
+    name: postgresql@{{ pg_version }}-main
     enabled: yes
     state: restarted 
     daemon_reload: yes
   tags: pg
 
-- name: "PG12 | Add citus extention to default database" 
+- name: "PG13 | Add citus extention to default database" 
   postgresql_ext:
     name: citus
     db: postgres
@@ -208,19 +180,7 @@
   become_user: "{{ pg_user }}"
   tags: pg
 
-- name: "PG12 | Add cstore_fdw extention to default database" 
-  postgresql_ext:
-    name: cstore_fdw
-    db: postgres
-    port: 9700
-    state: present
-    login_user: "{{ pg_user }}"
-    login_password: "{{ pg_user }}"
-  become: true
-  become_user: "{{ pg_user }}"
-  tags: pg
-
-- name: "PG12 | Get a list of active citus worker nodes"
+- name: "PG13 | Get a list of active citus worker nodes"
   shell: psql -p 9700 -c "SELECT * FROM master_get_active_worker_nodes();"
   args:
     executable: /bin/bash
@@ -235,7 +195,7 @@
     var: citus_active_worker_nodes
   tags: pg
 
-- name: "PG12 | Add the worker nodes to the citus coordinator"
+- name: "PG13 | Add the worker nodes to the citus coordinator"
   shell: "psql -p 9700 -c \"SELECT * from master_add_node('{{ hostvars[item].ansible_hostname }}', 9700);\""
   args:
     executable: /bin/bash
@@ -255,3 +215,26 @@
 - debug:
     var: citus_add_worker_nodes
   tags: pg
+
+- name: "PG13 | Copy SQL to nodes"
+  copy:
+    src: "{{ role_path }}/files/{{ item }}" 
+    dest: "/var/lib/postgresql/"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+  with_items:
+    - restore.sql
+    - insert.sql
+  become: true
+  become_user: "{{ pg_user }}" 
+  tags: pg
+ 
+ - name: "PG13 | Restore the database"
+   postgresql_db:
+     state: restore
+     name: postgres
+     target: "/var/lib/postgresql/restore.sql"
+  become: true
+  become_user: "{{ pg_user }}" 
+  tags: pg
+

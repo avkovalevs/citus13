@@ -1,12 +1,12 @@
 Deploy Citus cluster with cstore_fdw
 ==================
 
-Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/. Tested with Citus 9.5 with PG 12 on Ubuntu 18.04.
+Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/. Tested with Citus 9.5 with PG 13 on Ubuntu 20.04.
 
 Requirements
 ------------
 
-PostgreSQL 12, Citus 9.5, Ansible 2.9.16, python3  open ports (22 from anywhere, 5432 and 9700 inside the private network) 
+PostgreSQL 13, Citus 9.5, Ansible 2.9.16, python3  open ports (22 from anywhere, 5432 and 9700 inside the private network) 
 
 Role Variables
 --------------
@@ -35,15 +35,17 @@ Steps 4-6 needs for passwordless access between nodes for ansible-playbook tunin
 $ systemctl restart ssh
 ~~~
 
-For step 5 you need to know root password. You can use your own hostnames (in my case node1, node2, dbsrv2.) 
+For step 5 you need to know root password. You can use your own hostnames (in my case node1, node2, node3.) 
 
-5. Copy public key from master node to all nodes including master(root->root): 
+5. Copy public key from ansible-master node to all pg nodes including master(root->root): 
+
 ~~~
 $ cd ~
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node2
-$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@dbsrv2
+$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node3
 ~~~
+For AWS cloud nodes use passwordless access for master-target (root->ubuntu).
 6. Set "PasswordAuthentication no" changed in step 4 and restart ssh like "systemctl restart ssh.service" on all nodes.
 7. Change ./roles/citus/defaults/main.yml and inventory file "hosts" on your own ip addresses depend on number of nodes.
 8. Run the playbook to deploy cluster

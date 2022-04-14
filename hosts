@@ -1,13 +1,16 @@
 [ansible]
 dbsrv2
 
+[citus:vars]
+ansible_ssh_private_key_file = /root/citus_keypair.pem
+ansible_user = ubuntu
+
 [citus]
-172.31.44.235 citus_coordinator=True
-172.31.47.154 citus_coordinator=False
-172.31.42.246 citus_coordinator=False
+172.31.24.90 citus_coordinator=True
+172.31.24.130 citus_coordinator=False
+172.31.30.222 citus_coordinator=False
 
 [all]
-172.31.44.235
-172.31.47.154
-172.31.42.246
-172.31.41.41
+172.31.24.90
+172.31.24.130
+172.31.30.222

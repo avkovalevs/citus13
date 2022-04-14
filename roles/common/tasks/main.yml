@@ -7,10 +7,13 @@
     - python3-psycopg2
     - libpq-dev
     - nmap
+    - net-tools
     - git
     - build-essential
+    - acl
     state: present
     update_cache: yes
+  become: true
   tags: common
 
 - name: update hosts file by appending records
@@ -18,5 +21,6 @@
     dest: /etc/hosts
     content: "{{ lookup('template', 'hosts.j2') }}"
     state: present
+  become: true
   tags: common
 
