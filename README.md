@@ -1,4 +1,4 @@
-Deploy Citus cluster with cstore_fdw
+Deploy Citus cluster 
 ==================
 
 Install Postgresql Citus cluster Community Edition  - https://www.citusdata.com/. Tested with Citus 9.5 with PG 13 on Ubuntu 20.04.
@@ -21,7 +21,7 @@ $ sudo apt install ansible
 ~~~
 2. Get the code on master node: 
 ~~~ 
-$ cd /etc/ansible && git clone https://github.com/avkovalevs/citus.git
+$ cd /etc/ansible && git clone https://github.com/avkovalevs/citus13.git
 ~~~
 3. Generate public and private keys for root user on master node (Enter->Enter): 
 ~~~
@@ -41,9 +41,9 @@ For step 5 you need to know root password. You can use your own hostnames (in my
 
 ~~~
 $ cd ~
-$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1
-$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node2
-$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node3
+$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node1  #Coordinator
+$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node2  #Worker1
+$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node3  #Worker2
 ~~~
 For AWS cloud nodes use passwordless access for master-target (root->ubuntu).
 6. Set "PasswordAuthentication no" changed in step 4 and restart ssh like "systemctl restart ssh.service" on all nodes.

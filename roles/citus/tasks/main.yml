@@ -225,15 +225,39 @@
   with_items:
     - restore.sql
     - insert.sql
+  when:
+    - citus_coordinator
   become: true
   become_user: "{{ pg_user }}" 
   tags: pg
- 
- - name: "PG13 | Restore the database"
-   postgresql_db:
-     state: restore
-     name: postgres
-     target: "/var/lib/postgresql/restore.sql"
+
+- name: "PG13 | Create db users"
+  postgresql_user:
+    db: postgres
+    port: 9700
+    name: "{{ item }}"
+    priv: ALL
+    role_attr_flags: SUPERUSER,CREATEDB
+    state: present 
+  with_items:
+    - gr_prod_dba
+    - gr_prod_read  
+    - gr_prod_write  
+    - svc_talend_proddb
+  when:
+    - citus_coordinator
+  become: true
+  become_user: "{{ pg_user }}" 
+  tags: pg
+
+- name: "PG13 | Restore the database"
+  postgresql_db:
+    state: restore
+    name: postgres
+    port: 9700
+    target: "/var/lib/postgresql/restore.sql"
+  when:
+    - citus_coordinator
   become: true
   become_user: "{{ pg_user }}" 
   tags: pg
