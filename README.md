@@ -52,8 +52,11 @@ $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node2  #Worker1
 $ ssh-copy-id -i ~/.ssh/id_rsa.pub root@node3  #Worker2
 ~~~
 For AWS cloud nodes use passwordless access for master-target (root->ubuntu). 
+
 6. Set "PasswordAuthentication no" changed in step 4 and restart ssh like "systemctl restart ssh.service" on all nodes. 
+
 7. Change ./roles/citus/defaults/main.yml and inventory file "hosts" on your own ip addresses depend on number of nodes. 
+
 8. Run the following commands to deploy infra in AWS using terraform. 
 ~~~
 $ cd terraform
