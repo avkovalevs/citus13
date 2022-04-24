@@ -194,6 +194,7 @@
   with_items:
     - restore.sql
     - insert.sql
+    - citus.sql
   become: true
   become_user: "{{ pg_user }}"
   tags: pg
@@ -246,3 +247,15 @@
     var: citus_add_worker_nodes
   tags: pg
 
+- name: "PG13 | Create citus tables"
+  shell: psql -p 9700 -d testdbprod -f /var/lib/postgresql/citus.sql
+  args:
+    executable: /bin/bash
+  register: citus_active_worker_nodes
+  when:
+    - citus_coordinator
+  become: true
+  become_user: "{{ pg_user }}"
+  become_method: sudo
+  changed_when: false
+  tags: pg
