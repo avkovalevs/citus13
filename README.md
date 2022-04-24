@@ -27,7 +27,8 @@ $ sudo mv terraform /usr/local/bin/
 ~~~ 
 $ cd /etc/ansible && git clone https://github.com/avkovalevs/citus13.git
 ~~~
-If you use terraform with AWS provider skip the steps 3-7.
+If you use terraform with AWS provider skip the steps 3-7
+
 3. Generate public and private keys for root user on master node (Enter->Enter): 
 ~~~
 $ cd ~
@@ -61,7 +62,8 @@ $ terraform plan
 $ terraform apply
 ~~~
 The output will show you the private ip addresses which you need to add in /etc/ansible/citus13/hosts file. 
-9. Run the playbook to deploy cluster
+
+9. Run the playbook to deploy the cluster. 
 ~~~
 $ cd /etc/ansible/citus
 $ ansible-playbook -v -i hosts citus.yml --extra-vars "env_state=present"
