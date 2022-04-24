@@ -195,9 +195,10 @@
     - restore.sql
     - insert.sql
     - citus.sql
+    - transactionsa1.csv
   become: true
   become_user: "{{ pg_user }}"
-  tags: pg
+  tags: pg,sql
 
 - name: "PG13 | Restore the database"
   postgresql_db:

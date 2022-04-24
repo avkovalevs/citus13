@@ -73,6 +73,8 @@ $ ansible-playbook -v -i hosts citus.yml --extra-vars "env_state=present"
 ~~~
 You can create prod, dev or test inventory files instead of hosts and use it with -i options.
 
+10. Upload a sample data to distributed table using psql: \copy public.transactionsa1 from 'transactionsa1.csv' csv header;
+
 License
 -------
 

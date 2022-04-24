@@ -177,6 +177,13 @@ ALTER TABLE ONLY public.cluster
 
 
 --
+-- Name: transactionsa1 transactionsa1_pkey; Type: CONSTRAINT; Schema: public; Owner: gr_prod_dba
+--
+
+ALTER TABLE ONLY public.transactionsa1
+    ADD CONSTRAINT transactionsa1_pkey PRIMARY KEY (gtin_cluster_id);
+
+--
 -- Name: TABLE classifier; Type: ACL; Schema: public; Owner: gr_prod_dba
 --
 
