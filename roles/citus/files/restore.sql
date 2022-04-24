@@ -33,6 +33,26 @@ CREATE DATABASE testdbprod WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 
 
 ALTER DATABASE testdbprod OWNER TO gr_prod_dba;
 
+
+\connect testdbprod
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: testdbprod; Type: DATABASE PROPERTIES; Schema: -; Owner: gr_prod_dba
+--
+
+CREATE EXTENSION citus;
+
 \connect testdbprod
 
 SET statement_timeout = 0;

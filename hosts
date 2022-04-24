@@ -2,15 +2,16 @@
 dbsrv2
 
 [citus:vars]
-ansible_ssh_private_key_file = /root/citus_keypair.pem
+#ansible_ssh_private_key_file = /root/citus_keypair.pem
+ansible_ssh_private_key_file = /etc/ansible/citus/terraform/work_key_ireland2.pem
 ansible_user = ubuntu
 
 [citus]
-172.31.24.90 citus_coordinator=True
-172.31.24.130 citus_coordinator=False
-172.31.30.222 citus_coordinator=False
+172.31.26.76 citus_coordinator=True
+172.31.26.221 citus_coordinator=False
+172.31.19.6 citus_coordinator=False
 
 [all]
-172.31.24.90
-172.31.24.130
-172.31.30.222
+172.31.26.76
+172.31.26.221
+172.31.19.6

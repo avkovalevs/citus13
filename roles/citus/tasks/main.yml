@@ -168,23 +168,53 @@
     daemon_reload: yes
   tags: pg
 
-- name: "PG13 | Add citus extention to default database" 
-  postgresql_ext:
-    name: citus
+- name: "PG13 | Create db users"
+  postgresql_user:
     db: postgres
     port: 9700
+    name: "{{ item }}"
+    priv: ALL
+    role_attr_flags: SUPERUSER,CREATEDB
     state: present
-    login_user: "{{ pg_user }}"
-    login_password: "{{ pg_user }}"
+  with_items:
+    - gr_prod_dba
+    - gr_prod_read
+    - gr_prod_write
+    - svc_talend_proddb
+  become: true
+  become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "PG13 | Copy SQL to nodes"
+  copy:
+    src: "{{ role_path }}/files/{{ item }}"
+    dest: "/var/lib/postgresql/"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+  with_items:
+    - restore.sql
+    - insert.sql
+  become: true
+  become_user: "{{ pg_user }}"
+  tags: pg
+
+- name: "PG13 | Restore the database"
+  postgresql_db:
+    state: restore
+    name: postgres
+    port: 9700
+    target: "/var/lib/postgresql/restore.sql"
   become: true
   become_user: "{{ pg_user }}"
   tags: pg
 
 - name: "PG13 | Get a list of active citus worker nodes"
-  shell: psql -p 9700 -c "SELECT * FROM master_get_active_worker_nodes();"
+  shell: psql -p 9700 -d testdbprod -c "SELECT * FROM master_get_active_worker_nodes();"
   args:
     executable: /bin/bash
   register: citus_active_worker_nodes
+  when:
+    - citus_coordinator
   become: true
   become_user: "{{ pg_user }}"
   become_method: sudo
@@ -196,7 +226,7 @@
   tags: pg
 
 - name: "PG13 | Add the worker nodes to the citus coordinator"
-  shell: "psql -p 9700 -c \"SELECT * from master_add_node('{{ hostvars[item].ansible_hostname }}', 9700);\""
+  shell: "psql -p 9700 -d testdbprod -c \"SELECT * from master_add_node('{{ hostvars[item].ansible_hostname }}', 9700);\""
   args:
     executable: /bin/bash
   register: citus_add_worker_node
@@ -214,51 +244,5 @@
 
 - debug:
     var: citus_add_worker_nodes
-  tags: pg
-
-- name: "PG13 | Copy SQL to nodes"
-  copy:
-    src: "{{ role_path }}/files/{{ item }}" 
-    dest: "/var/lib/postgresql/"
-    owner: "{{ pg_user }}"
-    group: "{{ pg_group }}"
-  with_items:
-    - restore.sql
-    - insert.sql
-  when:
-    - citus_coordinator
-  become: true
-  become_user: "{{ pg_user }}" 
-  tags: pg
-
-- name: "PG13 | Create db users"
-  postgresql_user:
-    db: postgres
-    port: 9700
-    name: "{{ item }}"
-    priv: ALL
-    role_attr_flags: SUPERUSER,CREATEDB
-    state: present 
-  with_items:
-    - gr_prod_dba
-    - gr_prod_read  
-    - gr_prod_write  
-    - svc_talend_proddb
-  when:
-    - citus_coordinator
-  become: true
-  become_user: "{{ pg_user }}" 
-  tags: pg
-
-- name: "PG13 | Restore the database"
-  postgresql_db:
-    state: restore
-    name: postgres
-    port: 9700
-    target: "/var/lib/postgresql/restore.sql"
-  when:
-    - citus_coordinator
-  become: true
-  become_user: "{{ pg_user }}" 
   tags: pg
 
