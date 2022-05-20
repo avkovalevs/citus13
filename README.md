@@ -73,7 +73,24 @@ $ ansible-playbook -v -i hosts citus.yml --extra-vars "env_state=present"
 ~~~
 You can create prod, dev or test inventory files instead of hosts and use it with -i options.
 
-10. Upload a sample data to distributed table using psql: \copy public.transactionsa1 from 'transactionsa1.csv' csv header;
+NOTES: Upload a sample data to distributed table using psql: \copy public.transactionsa1 from 'transactionsa1.csv' csv header;
+
+You can create prod, dev or test inventory files instead of hosts and use it with -i options.
+Use "-t common" option for setup prereq on all nodes and "-t citus" for setup citus cluster.
+
+## HA failover scenario:
+1. Set up the parameter citus.shard_replication_factor = 2 on coordinator node.
+2. Create a simple distributed table on coordinator node using commands:
+~~
+create table bar ( id int );
+select create_distributed_table('bar', 'id');
+insert into bar select generate_series(1,100);
+~~
+3. Stop the first worker instance and check the data in table bar using command:
+~~
+select * from bar;
+~~
+4. Start the first worker and stop the second worker. After this steps check again using previous command.
 
 License
 -------

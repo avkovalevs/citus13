@@ -7,11 +7,11 @@ ansible_ssh_private_key_file = /etc/ansible/citus/terraform/work_key_ireland2.pe
 ansible_user = ubuntu
 
 [citus]
-172.31.26.76 citus_coordinator=True
-172.31.26.221 citus_coordinator=False
-172.31.19.6 citus_coordinator=False
+172.31.27.79 citus_coordinator=True
+172.31.20.86 citus_coordinator=False
+172.31.23.201 citus_coordinator=False
 
 [all]
-172.31.26.76
-172.31.26.221
-172.31.19.6
+172.31.27.79
+172.31.20.86
+172.31.23.201
