@@ -81,15 +81,15 @@ Use "-t common" option for setup prereq on all nodes and "-t citus" for setup ci
 ## HA failover scenario:
 1. Set up the parameter citus.shard_replication_factor = 2 on coordinator node.
 2. Create a simple distributed table on coordinator node using commands:
-~~
+~~~
 create table bar ( id int );
 select create_distributed_table('bar', 'id');
 insert into bar select generate_series(1,100);
-~~
+~~~
 3. Stop the first worker instance and check the data in table bar using command:
-~~
+~~~
 select * from bar;
-~~
+~~~
 4. Start the first worker and stop the second worker. After this steps check again using previous command.
 
 License
